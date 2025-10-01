@@ -1,0 +1,10 @@
+
+
+# POST http://localhost:3000/api/models/database.php 
+
+# POST http://localhost:3000/api/routes/inscription.php 
+
+POST http://localhost:3000/api/routes/login.php  
+
+
+

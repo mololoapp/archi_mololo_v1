@@ -1,5 +1,7 @@
 <?php
 
+require_once '../models/database.php';
+require_once '../config/config.php'; 
 
 // Vérifier méthode POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -8,13 +10,67 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Validation des champs
-$nom_complet = trim($_POST['nom_complet'] ?? '');
-$nom_artiste = trim($_POST['nom_artiste'] ?? '');
-$email = trim($_POST['email'] ?? '');
-$whatsapp = trim($_POST['whatsapp'] ?? '');
+// Fonction pour valider les champs
+function validate($field, $minLength = 1) {
+    return isset($_POST[$field]) && strlen(trim($_POST[$field])) >= $minLength;
+}
+
+// Récupération des données du formulaire
+$nomComplet = $_POST['nomComplet'] ?? '';
+$nomArtiste = $_POST['nomArtiste'] ?? '';
+$email = $_POST['email'] ?? null;
+$whatsapp = $_POST['whatsapp'] ?? '';
+$motdepasse = $_POST['motdepasse'] ?? '';
+$confirmMotdepasse = $_POST['confirmMotdepasse'] ?? '';
 $genres = $_POST['genres'] ?? [];
-$photo = $_FILES['photo'] ?? null;
+
+// Validation basique
+if (!validate('nomComplet') || !validate('nomArtiste') || !validate('whatsapp') || !validate('motdepasse', 6)) {
+    echo json_encode(['success' => false, 'error' => 'Champs obligatoires manquants ou mot de passe trop court']);
+    exit;
+}
+if ($motdepasse !== $confirmMotdepasse) {
+    echo json_encode(['success' => false, 'error' => 'Les mots de passe ne correspondent pas']);
+    exit;
+}
+
+// Gestion de l'upload de la photo de profil
+$photoPath = null;
+if (isset($_FILES['profilePic']) && $_FILES['profilePic']['error'] === UPLOAD_ERR_OK) {
+    $uploadDir = '../../uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+    $fileTmp = $_FILES['profilePic']['tmp_name'];
+    $fileName = uniqid('profile_') . '_' . basename($_FILES['profilePic']['name']);
+    $targetFile = $uploadDir . $fileName;
+    if (move_uploaded_file($fileTmp, $targetFile)) {
+        $photoPath = 'uploads/' . $fileName;
+    }
+}
+
+// Hash du mot de passe
+$motdepasseHash = password_hash($motdepasse, PASSWORD_DEFAULT);
+
+// Préparation des genres
+$genresStr = is_array($genres) ? implode(',', $genres) : $genres;
+
+// Insertion en base de données
+try {
+    $stmt = $pdo->prepare("INSERT INTO artistes (nom_complet, nom_artiste, email, whatsapp, motdepasse, genres, photo_path) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([
+        $nomComplet,
+        $nomArtiste,
+        $email,
+        $whatsapp,
+        $motdepasseHash,
+        $genresStr,
+        $photoPath
+    ]);
+    echo json_encode(['success' => true]);
+} catch (PDOException $e) {
+    echo json_encode(['success' => false, 'error' => 'Erreur serveur: ' . $e->getMessage()]);
+}
 
 // Vérifications
 $errors = [];

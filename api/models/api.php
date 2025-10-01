@@ -1,8 +1,6 @@
 <?php
 
-require_once 'database.php'; // la base des donnees 
-require_once '../config/config.php'; // Inclure le fichier de configuration
-
-
+// require_once '../models/database.php'; // la base des donnees 
+// require_once '../config/config.php'; // Inclure le fichier de configuration
 
 ?>

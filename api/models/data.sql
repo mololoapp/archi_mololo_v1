@@ -4,6 +4,7 @@ CREATE TABLE artistes (
     nom_artiste VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     whatsapp VARCHAR(20) NOT NULL,
+    motdepasse VARCHAR(255) NOT NULL,
     genres TEXT,
     photo_path VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

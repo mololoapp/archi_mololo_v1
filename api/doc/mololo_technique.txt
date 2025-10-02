@@ -1,0 +1,49 @@
+============================ 
+MoloLo+ - Documentation Technique Développeur 
+============================ 
+1. CONVENTIONS DE CODE ---------------------- - PHP : PSR-12, indentation 4 espaces, noms de fichiers en snake_case - JS : ES6+, fetch/ajax pour l’API, pas de jQuery - Variables et fonctions en anglais, commentaires en français pour la logique métier - Utilisation de prepared statements PDO pour toute requête SQL 
+2. ORGANISATION DES FICHIERS ---------------------------- - /api/index.php : point d’entrée unique, routeur REST - /api/routes/ : chaque endpoint REST (un fichier par fonctionnalité) - /api/models/Database.php : gestion centralisée de la connexion PDO - /uploads/ : stockage des fichiers uploadés (photos de profil, etc.) - /api/uploads/ : chemin d’accès côté serveur - /api/epk_update.php, /api/profile_update.php : endpoints pour l’édition (supportent JSON et 
+multipart/form-data) 
+3. STRUCTURE D’UN ENDPOINT REST (exemple) ----------------------------------------- 
+```php 
+<?php 
+header('Content-Type: application/json'); 
+require_once __DIR__ . '/../models/Database.php'; 
+session_start(); 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { 
+http_response_code(405); 
+echo json_encode(['error' => 'Méthode non autorisée']); 
+exit; 
+} 
+// ... logique métier ... 
+``` - Toujours vérifier la méthode HTTP - Toujours sécuriser l’accès par session si besoin - Toujours retourner un code HTTP adapté et un JSON 
+4. GESTION DES ERREURS ---------------------- - Utiliser http_response_code (400, 401, 404, 500…) - Retourner un JSON { success: false, error: '...' } en cas d’échec - Logger les erreurs serveur côté PHP (error_log) - Ne jamais exposer d’informations sensibles dans la réponse 
+5. SÉCURITÉ ----------- - Hashage des mots de passe (password_hash, password_verify) - Validation stricte des entrées (filter_var, regex, etc.) - Contrôle du type et de la taille des fichiers uploadés - Suppression de l’ancienne photo lors d’un nouvel upload - Utilisation de prepared statements pour éviter les injections SQL - Contrôle d’accès par session sur tous les endpoints sensibles 
+6. EXEMPLES D’APPELS API EN JS ------------------------------ - POST JSON : 
+```js 
+fetch('/api/epk_update', { 
+method: 'POST', 
+credentials: 'include', 
+headers: { 'Content-Type': 'application/json' }, 
+body: JSON.stringify({ bio: 'Nouvelle bio' }) 
+}) 
+.then(res => res.json()) 
+.then(data => showToast(data.message, data.success ? 'success' : 'error')); 
+``` - POST multipart (upload photo) : 
+```js 
+const formData = new FormData(); 
+formData.append('photo', fileInput.files[0]); 
+fetch('/api/profile_update', { 
+method: 'POST', 
+credentials: 'include', 
+body: formData 
+}) 
+.then(res => res.json()) 
+.then(data => showToast(data.message, data.success ? 'success' : 'error')); 
+``` 
+7. AJOUTER UN NOUVEAU ENDPOINT ------------------------------ - Créer un fichier dans /api/routes/ (ex: booking.php) - Ajouter la route correspondante dans /api/index.php (switch/case) - Respecter la structure : vérification session, méthode, validation, réponse JSON 
+8. CONTRIBUER OU ÉTENDRE ------------------------ - Ajouter de nouveaux champs dans la BDD si besoin (adapter mololo_schema.sql) - Ajouter des endpoints REST pour chaque nouvelle fonctionnalité - Utiliser le système de toast pour le feedback utilisateur - Documenter chaque nouvelle route ou fonctionnalité dans le README ou la doc technique 
+9. TESTS ET DÉBOGAGE -------------------- - Utiliser Postman ou Insomnia pour tester les endpoints API - Vérifier les logs PHP en cas d’erreur serveur - Utiliser les outils de développement du navigateur pour inspecter les requêtes fetch/ajax 
+10. SÉCURITÉ EN PRODUCTION -------------------------- - Toujours utiliser HTTPS - Protéger le dossier /uploads/ contre l’exécution de scripts - Désactiver l’affichage des erreurs PHP en production - Sauvegarder régulièrement la base de données  
+Pour toute question technique ou contribution, contacter le responsable du projet ou consulter la 
+documentation complète. 

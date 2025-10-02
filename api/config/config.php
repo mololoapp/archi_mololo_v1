@@ -31,14 +31,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
-
-// 🧪 Exemple de réponse JSON
-$response = [
-    "status" => "success",
-    "message" => "API sécurisée prête à recevoir des requêtes."
-];
-
-echo json_encode($response);
-
-// fin de la ligne de code de réponse JSON et mon code api configuraion 
+// Ne pas émettre de réponse ici; laisser les routes répondre
 ?>

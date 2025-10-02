@@ -1,0 +1,17 @@
+RewriteEngine On
+
+# Rediriger toutes les requêtes vers index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Sécurité - Empêcher l'accès direct aux fichiers PHP dans les sous-dossiers
+RewriteCond %{REQUEST_URI} ^.*/routes/.*\.php$ [OR]
+RewriteCond %{REQUEST_URI} ^.*/models/.*\.php$ [OR]
+RewriteCond %{REQUEST_URI} ^.*/config/.*\.php$
+RewriteRule ^(.*)$ - [F,L]
+
+# En-têtes de sécurité
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"

@@ -1,8 +1,8 @@
 <?php
 $host = 'localhost';        // Adresse du serveur MySQL
-$dbname = 'nom_de_la_base'; // Nom de la base de données
-$username = 'utilisateur';  // Nom d'utilisateur MySQL
-$password = 'mot_de_passe'; // Mot de passe MySQL
+$dbname = 'root'; // Nom de la base de données
+$username = '';  // Nom d'utilisateur MySQL
+$password = ''; // Mot de passe MySQL
 
 try {
     // Création de l'objet PDO

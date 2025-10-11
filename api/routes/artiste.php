@@ -31,7 +31,7 @@ try {
     $uri = str_replace('/api', '', $uri);
     $uri = trim($uri, '/');
     $uri_segments = explode('/', $uri);
-    $artiste_id = $uri_segments[1] ?? null;
+    $artiste_id = $uri_segments[2] ?? null;
     
     if (!$artiste_id) {
         http_response_code(400);

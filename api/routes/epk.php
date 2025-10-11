@@ -26,6 +26,7 @@ requireAuth();
 try {
     $database = new Database();
     $pdo = $database->getConnection();
+    $user_id = $_SESSION['user_id'];
     
     switch ($_SERVER['REQUEST_METHOD']) {
         case 'GET':
@@ -35,7 +36,8 @@ try {
             $uri = str_replace('/api', '', $uri);
             $uri = trim($uri, '/');
             $uri_segments = explode('/', $uri);
-            $epk_id = $uri_segments[1] ?? null;
+            $epk_id = $uri_segments[2] ?? null;
+            
             
             if ($epk_id) {
                 // Récupérer un EPK spécifique
@@ -66,12 +68,13 @@ try {
                 exit;
             }
             
-            $stmt = $pdo->prepare("INSERT INTO epk (`Nom_d'artiste`, Genre_musical, localisation, Annees_dactivite, artiste_model, biographie, discographie, photo, videos, presse, fiche, conctact, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+            $stmt = $pdo->prepare("INSERT INTO epk (user_id, `Nom_d'artiste`, Genre_musical, localisation, Annees_dactivite, artiste_model, biographie, discographie, photo, videos, presse, fiche, conctact, date) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
             $result = $stmt->execute([
+                $user_id,
                 $data['nom_artiste'] ?? '',
                 $data['genre_musical'] ?? '',
                 $data['localisation'] ?? '',
-                $data['annees_activite'] ?? null,
+                $data['annees_activite'] ?? '',
                 $data['artiste_model'] ?? '',
                 $data['biographie'] ?? '',
                 $data['discographie'] ?? '',
@@ -104,7 +107,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Erreur serveur'
+        'error' => 'Erreur serveur' . $e->getMessage()
     ]);
 }
 ?>

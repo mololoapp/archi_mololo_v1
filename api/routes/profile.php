@@ -33,11 +33,11 @@ try {
     $uri = str_replace('/api', '', $uri);
     $uri = trim($uri, '/');
     $uri_segments = explode('/', $uri);
-    $profile_id = $uri_segments[1] ?? $_SESSION['user_id'];
+    $profile_id = $_SESSION['user_id'];
     
     switch ($_SERVER['REQUEST_METHOD']) {
         case 'GET':
-            $stmt = $pdo->prepare("SELECT * FROM profile WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT * FROM profile WHERE user_id = ?");
             $stmt->execute([$profile_id]);
             $profile = $stmt->fetch();
             
@@ -45,7 +45,7 @@ try {
                 echo json_encode(['success' => true, 'data' => $profile]);
             } else {
                 http_response_code(404);
-                echo json_encode(['error' => 'Profil non trouvé']);
+                echo json_encode(['error' => 'Profil non trouvé ']);
             }
             break;
             
@@ -60,13 +60,13 @@ try {
             }
             
             // Vérifier si le profil existe
-            $stmt = $pdo->prepare("SELECT id FROM profile WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id FROM profile WHERE user_id = ?");
             $stmt->execute([$profile_id]);
             $exists = $stmt->fetch();
             
             if ($exists) {
                 // Mise à jour
-                $stmt = $pdo->prepare("UPDATE profile SET photo_couverture = ?, photo_profile = ?, SmartLink = ?, ville = ?, bio_courte = ?, bio_detailles = ?, instagram = ?, tiktok = ?, twitter = ?, linkeding = ?, facebook = ?, Spotify = ?, apple_music = ?, youtube = ?, Deezer = ?, Audiomack = ?, style_musique = ?, bio = ? WHERE id = ?");
+                $stmt = $pdo->prepare("UPDATE profile SET photo_couverture = ?, photo_profile = ?, SmartLink = ?, ville = ?, bio_courte = ?, bio_detailles = ?, instagram = ?, tiktok = ?, twitter = ?, linkeding = ?, facebook = ?, Spotify = ?, apple_music = ?, youtube = ?, Deezer = ?, Audiomack = ?, style_musique = ?, bio = ? WHERE user_id = ?");
                 $result = $stmt->execute([
                     $data['photo_couverture'] ?? '',
                     $data['photo_profile'] ?? '',
@@ -91,7 +91,7 @@ try {
                 $message = 'Profil mis à jour';
             } else {
                 // Création
-                $stmt = $pdo->prepare("INSERT INTO profile (id, photo_couverture, photo_profile, SmartLink, ville, bio_courte, bio_detailles, instagram, tiktok, twitter, linkeding, facebook, Spotify, apple_music, youtube, Deezer, Audiomack, style_musique, bio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt = $pdo->prepare("INSERT INTO profile (user_id,  photo_couverture, photo_profile, SmartLink, ville, bio_courte, bio_detailles, instagram, tiktok, twitter, linkeding, facebook, Spotify, apple_music, youtube, Deezer, Audiomack, style_musique, bio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 $result = $stmt->execute([
                     $profile_id,
                     $data['photo_couverture'] ?? '',

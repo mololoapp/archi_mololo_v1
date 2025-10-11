@@ -120,6 +120,34 @@ switch ($endpoint) {
         include __DIR__ . '/routes/smartlink.php';
         break;
 
+        case 'password':
+            include __DIR__ . '/routes/password.php';
+            break;
+        
+        case 'connexion-jwt':
+            if ($request_method === 'POST') {
+                include __DIR__ . '/routes/jwt_connexion.php';
+            } else {
+                sendResponse(['error' => 'Méthode non autorisée'], 405);
+            }
+            break;
+        
+        case 'refresh-token':
+            if ($request_method === 'POST') {
+                include __DIR__ . '/routes/jwt_refresh.php';
+            } else {
+                sendResponse(['error' => 'Méthode non autorisée'], 405);
+            }
+            break;
+        
+        case 'deconnexion-jwt':
+            if ($request_method === 'POST') {
+                include __DIR__ . '/routes/jwt_deconnexion.php';
+            } else {
+                sendResponse(['error' => 'Méthode non autorisée'], 405);
+            }
+            break;
+
     // ========== ENDPOINT DE STATUT ==========
     case 'status':
     case '':

@@ -19,6 +19,12 @@ L'API a été entièrement refactorisée pour améliorer la maintenabilité, la 
 | Mots de passe en clair | Hachage sécurisé avec `password_hash()` |
 | Pas de gestion de sessions | Authentification par sessions PHP |
 | Base de données incorrecte | Structure alignée avec `mololo_plus` |
+### Migration Auth JWT-only (Octobre 2025)
+
+- API désormais en authentification JWT (Bearer) uniquement, plus de sessions PHP.
+- Access tokens valides 60 jours par défaut.
+- Refresh tokens persistés serveur avec rotation sécurisée.
+
 
 ## 📁 Structure du projet
 
@@ -34,8 +40,9 @@ api/
 │   └── data.sql             # 📊 Structure de la base de données
 ├── routes/                   # 🛣️ Routes de l'API (13 fichiers)
 │   ├── inscription.php      # 📝 Création de compte
-│   ├── login.php            # 🔑 Authentification
-│   ├── logout.php           # 🚪 Déconnexion
+│   ├── jwt_connexion.php    # 🔑 Authentification (JWT)
+│   ├── jwt_refresh.php      # ♻️ Refresh token (JWT)
+│   ├── jwt_deconnexion.php  # 🚪 Révocation refresh (JWT)
 │   ├── artistes.php         # 👥 Liste des artistes
 │   ├── artiste.php          # 👤 Gestion d'un artiste
 │   ├── profile.php          # 📋 Gestion des profils
@@ -73,11 +80,12 @@ api/
 
 ## 🌐 Endpoints de l'API
 
-### **Authentification**
+### **Authentification (JWT)**
 ```http
 POST /api/inscription     # Créer un compte artiste
-POST /api/connexion       # Se connecter
-POST /api/deconnexion     # Se déconnecter
+POST /api/connexion       # Se connecter (JWT access + refresh)
+POST /api/refresh-token   # Rafraîchir access + refresh
+POST /api/deconnexion     # Révoquer le refresh token
 ```
 
 ### **Gestion des artistes**
@@ -152,10 +160,11 @@ Le fichier `.htaccess` est déjà configuré pour :
 - En-têtes de sécurité
 
 ### 4. **Variables d'environnement**
-Modifier `api/models/database.php` si nécessaire :
+- `JWT_SECRET` : secret de signature JWT (obligatoire en prod)
+- Modifier `api/models/database.php` si nécessaire :
 ```php
 private $host = 'localhost';
-private $dbname = 'mololo_plus';
+private $dbname = 'mololo';
 private $username = 'root';
 private $password = '';
 ```
@@ -180,11 +189,10 @@ fetch('/api/inscription', {
 .then(data => console.log(data));
 ```
 
-### **Exemple de connexion**
+### **Exemple de connexion (JWT)**
 ```javascript
 fetch('/api/connexion', {
     method: 'POST',
-    credentials: 'include',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
         identifiant: 'john@example.com',
@@ -192,34 +200,49 @@ fetch('/api/connexion', {
     })
 })
 .then(res => res.json())
-.then(data => {
-    if (data.success) {
-        console.log('Connecté:', data.user);
-    }
+.then(({ access_token, refresh_token }) => {
+    localStorage.setItem('access_token', access_token);
+    localStorage.setItem('refresh_token', refresh_token);
 });
 ```
 
-### **Exemple d'appel authentifié**
+### **Exemple d'appel authentifié (Bearer)**
 ```javascript
 fetch('/api/profile', {
     method: 'GET',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' }
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+    }
 })
 .then(res => res.json())
 .then(data => console.log(data));
+```
+
+### **Refresh token**
+```javascript
+fetch('/api/refresh-token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: localStorage.getItem('refresh_token') })
+})
+.then(res => res.json())
+.then(({ access_token, refresh_token }) => {
+    localStorage.setItem('access_token', access_token);
+    localStorage.setItem('refresh_token', refresh_token);
+});
 ```
 
 ## 🔐 Sécurité
 
 ### **Authentification**
 - Les mots de passe sont hachés avec `password_hash(PASSWORD_DEFAULT)`
-- Les sessions PHP gèrent l'état de connexion
-- `credentials: 'include'` requis côté client
+- Authentification par JWT Bearer; pas de sessions PHP
+- Access token: expiration 60 jours; refresh token stocké en base
 
 ### **Autorisation**
-- Fonction `requireAuth()` protège les endpoints sensibles
-- Vérification de `$_SESSION['user_id']` pour l'accès
+- `Authorization: Bearer <access_token>` requis sur les endpoints protégés
+- Extraction du `user_id` via `require_jwt_auth()` côté serveur
 
 ### **Validation des données**
 - Validation stricte des entrées dans chaque route
@@ -256,13 +279,17 @@ curl http://localhost/api/status
 curl -X POST http://localhost/api/inscription \
   -d "nom=Test&nom_artiste=TestArt&email=test@test.com&numero=123456789&style_musique=Rock&password=test123"
 
-# Test de connexion
+# Connexion (JWT)
 curl -X POST http://localhost/api/connexion \
-  -d "identifiant=test@test.com&password=test123" \
-  -c cookies.txt
+  -d "identifiant=test@test.com&password=test123"
 
-# Test endpoint protégé
-curl http://localhost/api/profile -b cookies.txt
+# Appel protégé (remplacer ACCESS_TOKEN)
+curl -H "Authorization: Bearer ACCESS_TOKEN" http://localhost/api/profile
+
+# Refresh (remplacer REFRESH_TOKEN)
+curl -X POST http://localhost/api/refresh-token \
+  -H "Content-Type: application/json" \
+  -d '{"refresh_token":"REFRESH_TOKEN"}'
 ```
 
 ## 🐛 Débogage

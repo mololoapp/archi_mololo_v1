@@ -1,0 +1,48 @@
+{
+  "success": true,
+  "data": {
+    "next_concert": {
+      "title": "Festival Nice",
+      "date": "24 Mars",
+      "location": "Nice, France",
+      "description": "Festival de musique électronique avec les meilleurs DJs internationaux"
+    },
+    "profile_completion": {
+      "percentage": 60,
+      "status": "À compléter",
+      "completed_steps": 3,
+      "total_steps": 5,
+      "steps": {
+        "photo_profile": true,
+        "bio": true,
+        "titles": true,
+        "social_networks": false,
+        "required_fields": false
+      },
+      "message": "Ton profil est visible par les pros dès qu'il atteint 90%"
+    },
+    "epk_stats": {
+      "percentage": 57,
+      "completed": 4,
+      "total": 7,
+      "status": "En cours",
+      "steps": {
+        "nom_artiste": true,
+        "genre_musical": true,
+        "biographie": true,
+        "discographie": true,
+        "photo": false,
+        "videos": false,
+        "contact": false
+      }
+    },
+    "unread_bookings": 3,
+    "general_stats": {
+      "total_concerts": 12,
+      "upcoming_concerts": 4,
+      "total_bookings": 8,
+      "total_epk": 1,
+      "total_notifications": 5
+    }
+  }
+}

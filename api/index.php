@@ -7,8 +7,7 @@
 // Inclure la configuration de sécurité et CORS
 require_once __DIR__ . '/config/config.php';
 
-// Démarrer la session pour l'authentification
-session_start();
+// Sessions non utilisées (JWT-only)
 
 // Récupérer l'URI et la méthode HTTP
 $request_uri = $_SERVER['REQUEST_URI'];
@@ -50,7 +49,7 @@ switch ($endpoint) {
     case 'connexion':
     case 'login':
         if ($request_method === 'POST') {
-            include __DIR__ . '/routes/login.php';
+            include __DIR__ . '/routes/jwt_connexion.php';
         } else {
             sendResponse(['error' => 'Méthode non autorisée'], 405);
         }
@@ -58,7 +57,11 @@ switch ($endpoint) {
 
     case 'deconnexion':
     case 'logout':
-        include __DIR__ . '/routes/logout.php';
+        if ($request_method === 'POST') {
+            include __DIR__ . '/routes/jwt_deconnexion.php';
+        } else {
+            sendResponse(['error' => 'Méthode non autorisée'], 405);
+        }
         break;
 
     // ========== GESTION DES ARTISTES ==========
@@ -120,6 +123,11 @@ switch ($endpoint) {
         include __DIR__ . '/routes/smartlink.php';
         break;
 
+    // ========== DASHBOARD ARTISTE ==========
+    case 'dashboard':
+        include __DIR__ . '/routes/dashboard.php';
+        break;
+
         case 'password':
             include __DIR__ . '/routes/password.php';
             break;
@@ -168,7 +176,8 @@ switch ($endpoint) {
                 'GET|POST /opportunites' => 'Gestion des opportunités',
                 'GET|POST /galerie' => 'Gestion de la galerie',
                 'GET|POST /notifications' => 'Gestion des notifications',
-                'GET|POST /smartlink' => 'Gestion des SmartLinks'
+                'GET|POST /smartlink' => 'Gestion des SmartLinks',
+                'GET /dashboard' => 'Dashboard artiste (statistiques et résumé)'
             ]
         ]);
         break;
@@ -181,7 +190,7 @@ switch ($endpoint) {
             'available_endpoints' => [
                 'inscription', 'connexion', 'deconnexion', 'artistes', 'artiste/{id}',
                 'profile', 'epk', 'booking', 'agenda', 'opportunites', 'galerie',
-                'notifications', 'smartlink', 'status'
+                'notifications', 'smartlink', 'dashboard', 'status'
             ]
         ], 404);
         break;

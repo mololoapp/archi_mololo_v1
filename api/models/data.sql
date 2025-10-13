@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1
--- Généré le : mer. 01 oct. 2025 à 11:58
+-- Généré le : lun. 13 oct. 2025 à 16:40
 -- Version du serveur : 10.4.32-MariaDB
--- Version de PHP : 8.0.30
+-- Version de PHP : 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de données : `mololo_plus`
+-- Base de données : `mololo`
 --
 
 -- --------------------------------------------------------
@@ -29,6 +29,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `agenda` (
   `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
   `date` datetime NOT NULL,
   `nom_concert` varchar(200) NOT NULL,
   `adresse` varchar(200) NOT NULL,
@@ -38,6 +39,14 @@ CREATE TABLE `agenda` (
   `nombre_personne` varchar(500) NOT NULL,
   `mise_jour` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `agenda`
+--
+
+INSERT INTO `agenda` (`id`, `user_id`, `date`, `nom_concert`, `adresse`, `heure`, `description`, `montant`, `nombre_personne`, `mise_jour`) VALUES
+(1, 4, '2024-12-20 21:00:00', 'Electronic Night', 'Salle Pleyel, Paris', '21:00:00', 'Concert électronique avec invités spéciaux', '50€', '500', '2025-10-08 12:24:51'),
+(2, 5, '2024-12-20 21:00:00', 'Electronic', 'Salle Pleyel, Paris', '21:00:00', 'Concert électronique avec invités spéciaux', '50€', '500', '2025-10-13 12:50:02');
 
 -- --------------------------------------------------------
 
@@ -56,6 +65,17 @@ CREATE TABLE `artiste` (
   `date_inscription` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Déchargement des données de la table `artiste`
+--
+
+INSERT INTO `artiste` (`id`, `nom`, `nom_artiste`, `numero`, `email`, `style_musique`, `password`, `date_inscription`) VALUES
+(1, 'jhon', 'dj jhon', '+33123456789', 'jhondoe@example.com', 'electronic', '$2y$10$gtMoRJ3ZSkpeEswkwDbdludOoRFqm9.h2HZhUTF82/.JrLCuBS0wW', '2025-10-02 20:54:09'),
+(2, 'Jn Doe', 'DJ John', '+32123456789', 'doe@example.com', 'Electronic', '$2y$10$Omu4AQfKIsaZNRMeWr8J0epId9NB3bmbSDoR4b.fzsZwIRddFn3wa', '2025-10-06 19:10:35'),
+(3, 'GBEL', 'SALVA', '+34123456789', 'GB@example.com', 'Electronic', '$2y$10$mbwuZb5hZxVJcxxlBwsNSu06AIej08AOSPKWCRlYQxZMN4.6muVqe', '2025-10-06 19:22:59'),
+(4, 'John Doe', 'DJ John', '+33123456789', 'john.doe@example.com', 'Electronic', '$2y$10$/9NpViQVSriHo4jA1zPI0uw5ViaCcE4MXf6cFUTyx9JJHTp9ARzEC', '2025-10-08 12:20:50'),
+(5, 'papa', 'gedeon', '+35123456789', 'papa@example.com', 'Electronic', '$2y$10$zQLL3nqixcDo4lGQb47S1eGT71HNWzXPkd75/G.lW5S6zXGCdgP5m', '2025-10-08 12:39:21');
+
 -- --------------------------------------------------------
 
 --
@@ -70,8 +90,16 @@ CREATE TABLE `booking` (
   `montant` varchar(200) NOT NULL,
   `heure` time NOT NULL,
   `date` datetime NOT NULL,
-  `message` varchar(200) NOT NULL
+  `message` varchar(200) NOT NULL,
+  `user_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `booking`
+--
+
+INSERT INTO `booking` (`id`, `nom_utilisateur`, `lieux`, `adresse`, `montant`, `heure`, `date`, `message`, `user_id`) VALUES
+(1, 'John Doe', 'Club XYZ', '123 Rue de la Musique, Paris', '500€', '22:00:00', '2024-12-15 22:00:00', 'Soirée électronique, 3h de set', 4);
 
 -- --------------------------------------------------------
 
@@ -81,6 +109,7 @@ CREATE TABLE `booking` (
 
 CREATE TABLE `epk` (
   `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
   `Nom_d'artiste` varchar(200) NOT NULL,
   `Genre_musical` varchar(200) NOT NULL,
   `localisation` varchar(200) NOT NULL,
@@ -96,6 +125,13 @@ CREATE TABLE `epk` (
   `date` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Déchargement des données de la table `epk`
+--
+
+INSERT INTO `epk` (`id`, `user_id`, `Nom_d'artiste`, `Genre_musical`, `localisation`, `Annees_dactivite`, `artiste_model`, `biographie`, `discographie`, `photo`, `videos`, `presse`, `fiche`, `conctact`, `date`) VALUES
+(1, 4, 'DJ John', 'Electronic', 'Paris, France', '0000-00-00 00:00:00', '', 'Artiste électronique depuis 2010...', 'Album 1: Future Sounds (2020), Single: Night Vibes (2024)', '', '', '', '', 'john.doe@example.com', '2025-10-09 11:08:26');
+
 -- --------------------------------------------------------
 
 --
@@ -110,7 +146,23 @@ CREATE TABLE `galerie` (
   `favorie` varchar(200) NOT NULL,
   `description` varchar(200) NOT NULL,
   `details` varchar(200) NOT NULL,
-  `date` varchar(200) NOT NULL
+  `date` varchar(200) NOT NULL,
+  `user_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `jwt_refresh_tokens`
+--
+
+CREATE TABLE `jwt_refresh_tokens` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `token_hash` char(64) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `revoked` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -123,7 +175,8 @@ CREATE TABLE `notification` (
   `id` int(11) NOT NULL,
   `notification` varchar(200) NOT NULL,
   `description` varchar(5000) NOT NULL,
-  `date` datetime NOT NULL
+  `date` datetime NOT NULL,
+  `user_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -144,11 +197,38 @@ CREATE TABLE `opportunite` (
 -- --------------------------------------------------------
 
 --
+-- Structure de la table `password_resets`
+--
+
+CREATE TABLE `password_resets` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `channel` enum('email','sms') NOT NULL,
+  `salt` varbinary(32) NOT NULL,
+  `otp_hash` char(64) NOT NULL,
+  `otp_expires_at` datetime NOT NULL,
+  `attempts` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
+  `consumed` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `password_resets`
+--
+
+INSERT INTO `password_resets` (`id`, `user_id`, `channel`, `salt`, `otp_hash`, `otp_expires_at`, `attempts`, `consumed`, `created_at`) VALUES
+(1, 4, 'email', 0x228677ecb299d1db6b91be59c1d4f0dc, '6b93d6ccdc4b0fbd87fc93994a4945e5e3f5559da2784b1850833edf670b6df6', '2025-10-10 14:29:57', 1, 0, '2025-10-10 14:19:57'),
+(2, 4, 'email', 0x87c16023b802393edc048b5e323d8ff1, 'fb99429491577b74a7335eb274a26940dbe2f0cc90377fb01e64de835bed49f5', '2025-10-10 14:41:41', 0, 0, '2025-10-10 14:31:41');
+
+-- --------------------------------------------------------
+
+--
 -- Structure de la table `profile`
 --
 
 CREATE TABLE `profile` (
   `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
   `photo_couverture` varchar(200) NOT NULL,
   `photo_profile` varchar(200) NOT NULL,
   `SmartLink` varchar(200) NOT NULL,
@@ -168,6 +248,14 @@ CREATE TABLE `profile` (
   `style_musique` varchar(200) NOT NULL,
   `bio` varchar(200) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `profile`
+--
+
+INSERT INTO `profile` (`id`, `user_id`, `photo_couverture`, `photo_profile`, `SmartLink`, `ville`, `bio_courte`, `bio_detailles`, `instagram`, `tiktok`, `twitter`, `linkeding`, `facebook`, `Spotify`, `apple_music`, `youtube`, `Deezer`, `Audiomack`, `style_musique`, `bio`) VALUES
+(1, 4, '', '', '', 'Lyon', 'Update bio courte', '', '', '', '', '', '', '', '', '', '', '', '', ''),
+(2, 5, '', '', '', 'Lyon', 'Update bio courte', '', '', '', '', '', '', '', '', '', '', '', '', '');
 
 -- --------------------------------------------------------
 
@@ -192,7 +280,8 @@ CREATE TABLE `smartlink` (
   `id` int(11) NOT NULL,
   `smartlink` varchar(200) NOT NULL,
   `smartlink_whatsapp` varchar(200) NOT NULL,
-  `smartlink_email` varchar(200) NOT NULL
+  `smartlink_email` varchar(200) NOT NULL,
+  `user_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -203,7 +292,8 @@ CREATE TABLE `smartlink` (
 
 CREATE TABLE `token` (
   `id` int(11) NOT NULL,
-  `token` varchar(500) NOT NULL
+  `token` varchar(500) NOT NULL,
+  `user_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -226,25 +316,37 @@ ALTER TABLE `artiste`
 -- Index pour la table `booking`
 --
 ALTER TABLE `booking`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_user_booking` (`user_id`);
 
 --
 -- Index pour la table `epk`
 --
 ALTER TABLE `epk`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_user_epk` (`user_id`);
 
 --
 -- Index pour la table `galerie`
 --
 ALTER TABLE `galerie`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_user_galerie` (`user_id`);
+
+--
+-- Index pour la table `jwt_refresh_tokens`
+--
+ALTER TABLE `jwt_refresh_tokens`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `token_hash` (`token_hash`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Index pour la table `notification`
 --
 ALTER TABLE `notification`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_user_notification` (`user_id`);
 
 --
 -- Index pour la table `opportunite`
@@ -253,10 +355,18 @@ ALTER TABLE `opportunite`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Index pour la table `password_resets`
+--
+ALTER TABLE `password_resets`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
 -- Index pour la table `profile`
 --
 ALTER TABLE `profile`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_user_profil` (`user_id`);
 
 --
 -- Index pour la table `session`
@@ -268,13 +378,15 @@ ALTER TABLE `session`
 -- Index pour la table `smartlink`
 --
 ALTER TABLE `smartlink`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_user_smartlink` (`user_id`);
 
 --
 -- Index pour la table `token`
 --
 ALTER TABLE `token`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_user_token` (`user_id`);
 
 --
 -- AUTO_INCREMENT pour les tables déchargées
@@ -284,30 +396,36 @@ ALTER TABLE `token`
 -- AUTO_INCREMENT pour la table `agenda`
 --
 ALTER TABLE `agenda`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT pour la table `artiste`
 --
 ALTER TABLE `artiste`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT pour la table `booking`
 --
 ALTER TABLE `booking`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT pour la table `epk`
 --
 ALTER TABLE `epk`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT pour la table `galerie`
 --
 ALTER TABLE `galerie`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `jwt_refresh_tokens`
+--
+ALTER TABLE `jwt_refresh_tokens`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -323,10 +441,16 @@ ALTER TABLE `opportunite`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT pour la table `password_resets`
+--
+ALTER TABLE `password_resets`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT pour la table `profile`
 --
 ALTER TABLE `profile`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT pour la table `session`
@@ -345,6 +469,52 @@ ALTER TABLE `smartlink`
 --
 ALTER TABLE `token`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Contraintes pour les tables déchargées
+--
+
+--
+-- Contraintes pour la table `booking`
+--
+ALTER TABLE `booking`
+  ADD CONSTRAINT `fk_user_booking` FOREIGN KEY (`user_id`) REFERENCES `artiste` (`id`);
+
+--
+-- Contraintes pour la table `epk`
+--
+ALTER TABLE `epk`
+  ADD CONSTRAINT `fk_user_epk` FOREIGN KEY (`user_id`) REFERENCES `artiste` (`id`);
+
+--
+-- Contraintes pour la table `galerie`
+--
+ALTER TABLE `galerie`
+  ADD CONSTRAINT `fk_user_galerie` FOREIGN KEY (`user_id`) REFERENCES `artiste` (`id`);
+
+--
+-- Contraintes pour la table `notification`
+--
+ALTER TABLE `notification`
+  ADD CONSTRAINT `fk_user_notification` FOREIGN KEY (`user_id`) REFERENCES `artiste` (`id`);
+
+--
+-- Contraintes pour la table `profile`
+--
+ALTER TABLE `profile`
+  ADD CONSTRAINT `fk_user_profil` FOREIGN KEY (`user_id`) REFERENCES `artiste` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `smartlink`
+--
+ALTER TABLE `smartlink`
+  ADD CONSTRAINT `fk_user_smartlink` FOREIGN KEY (`user_id`) REFERENCES `artiste` (`id`);
+
+--
+-- Contraintes pour la table `token`
+--
+ALTER TABLE `token`
+  ADD CONSTRAINT `fk_user_token` FOREIGN KEY (`user_id`) REFERENCES `artiste` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

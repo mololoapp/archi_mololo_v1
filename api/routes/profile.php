@@ -1,19 +1,8 @@
 <?php
 header('Content-Type: application/json');
 require_once __DIR__ . '/../models/database.php';
-
-
-// Fonction utilitaire pour vérifier l'authentification
-function requireAuth() {
-    if (!isset($_SESSION['user_id'])) {
-        http_response_code(401);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Authentification requise'
-        ]);
-        exit();
-    }
-}
+require_once __DIR__ . '/../utils/jwt.php';
+require_once __DIR__ . '/../utils/upload.php';
 
 // Fonction utilitaire pour récupérer les données JSON
 function getJsonInput() {
@@ -21,19 +10,14 @@ function getJsonInput() {
     return json_decode($input, true);
 }
 
-requireAuth();
+$user_id = require_jwt_auth();
 
 try {
     $database = new Database();
     $pdo = $database->getConnection();
     
-    // Récupérer l'ID du profil (par défaut celui de l'utilisateur connecté)
-    $request_uri = $_SERVER['REQUEST_URI'];
-    $uri = parse_url($request_uri, PHP_URL_PATH);
-    $uri = str_replace('/api', '', $uri);
-    $uri = trim($uri, '/');
-    $uri_segments = explode('/', $uri);
-    $profile_id = $_SESSION['user_id'];
+    // ID du profil = utilisateur authentifié via JWT
+    $profile_id = $user_id;
     
     switch ($_SERVER['REQUEST_METHOD']) {
         case 'GET':
@@ -51,9 +35,9 @@ try {
             
         case 'POST':
         case 'PUT':
-            $data = getJsonInput();
+            $data = $_POST ?: getJsonInput() ?: [];
             
-            if (!$data) {
+            if (!$data && empty($_FILES)) {
                 http_response_code(400);
                 echo json_encode(['error' => 'Données JSON invalides']);
                 exit;
@@ -64,12 +48,24 @@ try {
             $stmt->execute([$profile_id]);
             $exists = $stmt->fetch();
             
+            // Uploads optionnels
+            $photoCouverture = $data['photo_couverture'] ?? null;
+            if (!empty($_FILES['photo_couverture']) && is_array($_FILES['photo_couverture'])) {
+                $res = move_uploaded_image($_FILES['photo_couverture'], __DIR__ . '/../../uploads');
+                if ($res['ok']) $photoCouverture = $res['path'];
+            }
+            $photoProfile = $data['photo_profile'] ?? null;
+            if (!empty($_FILES['photo_profile']) && is_array($_FILES['photo_profile'])) {
+                $res2 = move_uploaded_image($_FILES['photo_profile'], __DIR__ . '/../../uploads');
+                if ($res2['ok']) $photoProfile = $res2['path'];
+            }
+
             if ($exists) {
                 // Mise à jour
-                $stmt = $pdo->prepare("UPDATE profile SET photo_couverture = ?, photo_profile = ?, SmartLink = ?, ville = ?, bio_courte = ?, bio_detailles = ?, instagram = ?, tiktok = ?, twitter = ?, linkeding = ?, facebook = ?, Spotify = ?, apple_music = ?, youtube = ?, Deezer = ?, Audiomack = ?, style_musique = ?, bio = ? WHERE user_id = ?");
+                $stmt = $pdo->prepare("UPDATE profile SET photo_couverture = COALESCE(?, photo_couverture), photo_profile = COALESCE(?, photo_profile), SmartLink = ?, ville = ?, bio_courte = ?, bio_detailles = ?, instagram = ?, tiktok = ?, twitter = ?, linkeding = ?, facebook = ?, Spotify = ?, apple_music = ?, youtube = ?, Deezer = ?, Audiomack = ?, style_musique = ?, bio = ? WHERE user_id = ?");
                 $result = $stmt->execute([
-                    $data['photo_couverture'] ?? '',
-                    $data['photo_profile'] ?? '',
+                    $photoCouverture,
+                    $photoProfile,
                     $data['SmartLink'] ?? '',
                     $data['ville'] ?? '',
                     $data['bio_courte'] ?? '',
@@ -94,8 +90,8 @@ try {
                 $stmt = $pdo->prepare("INSERT INTO profile (user_id,  photo_couverture, photo_profile, SmartLink, ville, bio_courte, bio_detailles, instagram, tiktok, twitter, linkeding, facebook, Spotify, apple_music, youtube, Deezer, Audiomack, style_musique, bio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 $result = $stmt->execute([
                     $profile_id,
-                    $data['photo_couverture'] ?? '',
-                    $data['photo_profile'] ?? '',
+                    $photoCouverture ?? '',
+                    $photoProfile ?? '',
                     $data['SmartLink'] ?? '',
                     $data['ville'] ?? '',
                     $data['bio_courte'] ?? '',

@@ -1,19 +1,8 @@
 <?php
 header('Content-Type: application/json');
 require_once __DIR__ . '/../models/database.php';
+require_once __DIR__ . '/../utils/jwt.php';
 
-
-// Fonction utilitaire pour vérifier l'authentification
-function requireAuth() {
-    if (!isset($_SESSION['user_id'])) {
-        http_response_code(401);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Authentification requise'
-        ]);
-        exit();
-    }
-}
 
 // Fonction utilitaire pour récupérer les données JSON
 function getJsonInput() {
@@ -56,7 +45,7 @@ try {
             break;
             
         case 'PUT':
-            requireAuth();
+            $user_id = require_jwt_auth();
             // Mettre à jour un artiste
             $data = getJsonInput();
             
@@ -66,6 +55,8 @@ try {
                 exit;
             }
             
+            // Seul le propriétaire peut modifier son profil artiste
+            if ((int)$user_id !== (int)$artiste_id) { http_response_code(403); echo json_encode(['error' => 'Forbidden']); exit; }
             $stmt = $pdo->prepare("UPDATE artiste SET nom = ?, nom_artiste = ?, email = ?, numero = ?, style_musique = ? WHERE id = ?");
             $result = $stmt->execute([
                 $data['nom'] ?? '',
@@ -85,8 +76,9 @@ try {
             break;
             
         case 'DELETE':
-            requireAuth();
+            $user_id = require_jwt_auth();
             // Supprimer un artiste
+            if ((int)$user_id !== (int)$artiste_id) { http_response_code(403); echo json_encode(['error' => 'Forbidden']); exit; }
             $stmt = $pdo->prepare("DELETE FROM artiste WHERE id = ?");
             $result = $stmt->execute([$artiste_id]);
             

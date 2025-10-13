@@ -1,8 +1,9 @@
 <?php
-// Simple API tester for MoloLo+
+// Simple API tester for MoloLo+ (JWT Version)
 // - Choose endpoint and method
 // - Send request via PHP cURL
-// - Persist session using cookies.txt in this directory
+// - Persist JWT tokens using cookies.txt in this directory
+// - Support for Bearer token authentication
 
 function get_base_url() {
     // Adjust to your local setup if needed
@@ -16,6 +17,43 @@ function get_base_url() {
     }
     foreach ($candidates as $url) {
         return $url; // default to first candidate
+    }
+}
+
+// JWT Token management
+function get_stored_tokens() {
+    $tokenFile = __DIR__ . DIRECTORY_SEPARATOR . 'jwt_tokens.json';
+    if (!file_exists($tokenFile)) {
+        return ['access_token' => '', 'refresh_token' => ''];
+    }
+    
+    $content = file_get_contents($tokenFile);
+    $tokens = json_decode($content, true);
+    
+    if (!$tokens || !is_array($tokens)) {
+        return ['access_token' => '', 'refresh_token' => ''];
+    }
+    
+    return [
+        'access_token' => $tokens['access_token'] ?? '',
+        'refresh_token' => $tokens['refresh_token'] ?? ''
+    ];
+}
+
+function store_tokens($access_token, $refresh_token) {
+    $tokenFile = __DIR__ . DIRECTORY_SEPARATOR . 'jwt_tokens.json';
+    $tokens = [
+        'access_token' => $access_token,
+        'refresh_token' => $refresh_token,
+        'stored_at' => date('Y-m-d H:i:s')
+    ];
+    file_put_contents($tokenFile, json_encode($tokens, JSON_PRETTY_PRINT));
+}
+
+function clear_tokens() {
+    $tokenFile = __DIR__ . DIRECTORY_SEPARATOR . 'jwt_tokens.json';
+    if (file_exists($tokenFile)) {
+        unlink($tokenFile);
     }
 }
 
@@ -36,9 +74,13 @@ $defaultHeaders = [
 ];
 
 $predefined = [
-    [ 'label' => 'GET /status', 'method' => 'GET', 'path' => '/status', 'ctype' => '' , 'body' => '' ],
-    [ 'label' => 'GET /artistes', 'method' => 'GET', 'path' => '/artistes', 'ctype' => '' , 'body' => '' ],
-    [ 'label' => 'GET /artiste/{id}', 'method' => 'GET', 'path' => '/artiste/1', 'ctype' => '' , 'body' => '' ],
+    // ========== ENDPOINTS PUBLICS ==========
+    [ 'label' => 'GET /status', 'method' => 'GET', 'path' => '/status', 'ctype' => '' , 'body' => '', 'auth' => false ],
+    [ 'label' => 'GET /artistes', 'method' => 'GET', 'path' => '/artistes', 'ctype' => '' , 'body' => '', 'auth' => false ],
+    [ 'label' => 'GET /artiste/{id}', 'method' => 'GET', 'path' => '/artiste/1', 'ctype' => '' , 'body' => '', 'auth' => false ],
+    [ 'label' => 'GET /opportunites', 'method' => 'GET', 'path' => '/opportunites', 'ctype' => '' , 'body' => '', 'auth' => false ],
+    
+    // ========== AUTHENTIFICATION JWT ==========
     [ 'label' => 'POST /inscription (x-www-form-urlencoded)', 'method' => 'POST', 'path' => '/inscription', 'ctype' => 'application/x-www-form-urlencoded', 'body' => http_build_query([
         'nom' => 'John Doe',
         'nom_artiste' => 'DJ John',
@@ -46,35 +88,45 @@ $predefined = [
         'numero' => '+33123456789',
         'style_musique' => 'Electronic',
         'password' => 'motdepasse123',
-    ]) ],
-    [ 'label' => 'POST /connexion (x-www-form-urlencoded)', 'method' => 'POST', 'path' => '/connexion', 'ctype' => 'application/x-www-form-urlencoded', 'body' => http_build_query([
+    ]), 'auth' => false ],
+    [ 'label' => 'POST /connexion (JWT)', 'method' => 'POST', 'path' => '/connexion', 'ctype' => 'application/x-www-form-urlencoded', 'body' => http_build_query([
         'identifiant' => 'john.doe@example.com',
         'password' => 'motdepasse123',
-    ]) ],
-    [ 'label' => 'POST /deconnexion', 'method' => 'POST', 'path' => '/deconnexion', 'ctype' => 'application/json', 'body' => '' ],
-    [ 'label' => 'GET /profile', 'method' => 'GET', 'path' => '/profile', 'ctype' => '', 'body' => '' ],
-    [ 'label' => 'POST /profile (JSON)', 'method' => 'POST', 'path' => '/profile', 'ctype' => 'application/json', 'body' => json_encode([
+    ]), 'auth' => false ],
+    [ 'label' => 'POST /refresh-token (JWT)', 'method' => 'POST', 'path' => '/refresh-token', 'ctype' => 'application/json', 'body' => json_encode([
+        'refresh_token' => '{{REFRESH_TOKEN}}'
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 'auth' => false ],
+    [ 'label' => 'POST /deconnexion (JWT)', 'method' => 'POST', 'path' => '/deconnexion', 'ctype' => 'application/json', 'body' => json_encode([
+        'refresh_token' => '{{REFRESH_TOKEN}}'
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 'auth' => false ],
+    
+    // ========== ENDPOINTS PROTÉGÉS (JWT) ==========
+    [ 'label' => 'GET /profile (JWT)', 'method' => 'GET', 'path' => '/profile', 'ctype' => '', 'body' => '', 'auth' => true ],
+    [ 'label' => 'POST /profile (JWT)', 'method' => 'POST', 'path' => '/profile', 'ctype' => 'application/json', 'body' => json_encode([
         'ville' => 'Paris',
         'bio_courte' => 'Artiste électronique passionné',
-        'bio_detailles' => 'Plus de 10 ans dexpérience...',
+        'bio_detailles' => 'Plus de 10 ans d\'expérience...',
         'instagram' => '@djjohn',
         'facebook' => 'facebook.com/djjohn',
         'style_musique' => 'Electronic, House',
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ],
-    [ 'label' => 'PUT /profile (JSON)', 'method' => 'PUT', 'path' => '/profile', 'ctype' => 'application/json', 'body' => json_encode([
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 'auth' => true ],
+    [ 'label' => 'PUT /profile (JWT)', 'method' => 'PUT', 'path' => '/profile', 'ctype' => 'application/json', 'body' => json_encode([
         'ville' => 'Lyon',
         'bio_courte' => 'Update bio courte',
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ],
-    [ 'label' => 'POST /epk (JSON)', 'method' => 'POST', 'path' => '/epk', 'ctype' => 'application/json', 'body' => json_encode([
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 'auth' => true ],
+    
+    [ 'label' => 'GET /epk (JWT)', 'method' => 'GET', 'path' => '/epk', 'ctype' => '', 'body' => '', 'auth' => true ],
+    [ 'label' => 'POST /epk (JWT)', 'method' => 'POST', 'path' => '/epk', 'ctype' => 'application/json', 'body' => json_encode([
         'nom_artiste' => 'DJ John',
         'genre_musical' => 'Electronic',
         'localisation' => 'Paris, France',
         'biographie' => 'Artiste électronique depuis 2010...',
         'discographie' => 'Album 1: Future Sounds (2020), Single: Night Vibes (2024)',
         'contact' => 'john.doe@example.com',
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ],
-    [ 'label' => 'GET /booking', 'method' => 'GET', 'path' => '/booking', 'ctype' => '', 'body' => '' ],
-    [ 'label' => 'POST /booking (JSON)', 'method' => 'POST', 'path' => '/booking', 'ctype' => 'application/json', 'body' => json_encode([
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 'auth' => true ],
+    
+    [ 'label' => 'GET /booking (JWT)', 'method' => 'GET', 'path' => '/booking', 'ctype' => '', 'body' => '', 'auth' => true ],
+    [ 'label' => 'POST /booking (JWT)', 'method' => 'POST', 'path' => '/booking', 'ctype' => 'application/json', 'body' => json_encode([
         'nom_utilisateur' => 'John Doe',
         'lieux' => 'Club XYZ',
         'adresse' => '123 Rue de la Musique, Paris',
@@ -82,9 +134,10 @@ $predefined = [
         'heure' => '22:00:00',
         'date' => '2024-12-15 22:00:00',
         'message' => 'Soirée électronique, 3h de set',
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ],
-    [ 'label' => 'GET /agenda', 'method' => 'GET', 'path' => '/agenda', 'ctype' => '', 'body' => '' ],
-    [ 'label' => 'POST /agenda (JSON)', 'method' => 'POST', 'path' => '/agenda', 'ctype' => 'application/json', 'body' => json_encode([
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 'auth' => true ],
+    
+    [ 'label' => 'GET /agenda (JWT)', 'method' => 'GET', 'path' => '/agenda', 'ctype' => '', 'body' => '', 'auth' => true ],
+    [ 'label' => 'POST /agenda (JWT)', 'method' => 'POST', 'path' => '/agenda', 'ctype' => 'application/json', 'body' => json_encode([
         'nom_concert' => 'Electronic Night',
         'date' => '2024-12-20 21:00:00',
         'heure' => '21:00:00',
@@ -92,11 +145,26 @@ $predefined = [
         'description' => 'Concert électronique avec invités spéciaux',
         'montant' => '50€',
         'nombre_personne' => '500',
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ],
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 'auth' => true ],
+    
+    [ 'label' => 'GET /galerie (JWT)', 'method' => 'GET', 'path' => '/galerie', 'ctype' => '', 'body' => '', 'auth' => true ],
+    [ 'label' => 'GET /notifications (JWT)', 'method' => 'GET', 'path' => '/notifications', 'ctype' => '', 'body' => '', 'auth' => true ],
+    [ 'label' => 'GET /smartlink (JWT)', 'method' => 'GET', 'path' => '/smartlink', 'ctype' => '', 'body' => '', 'auth' => true ],
+    [ 'label' => 'GET /dashboard (JWT)', 'method' => 'GET', 'path' => '/dashboard', 'ctype' => '', 'body' => '', 'auth' => true ],
+    [ 'label' => 'PATCH /booking/{id}/read (JWT)', 'method' => 'PATCH', 'path' => '/booking/1/read', 'ctype' => '', 'body' => '', 'auth' => true ],
 ];
 
 $responseData = null;
 $errorData = null;
+$tokens = get_stored_tokens();
+
+// Handle clear tokens request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_tokens'])) {
+    clear_tokens();
+    $tokens = get_stored_tokens();
+    $successMessage = "Tokens JWT effacés avec succès";
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_request'])) {
     $baseUrl = rtrim($_POST['base_url'] ?? get_base_url(), '/');
     $method = strtoupper(trim($_POST['method'] ?? 'GET'));
@@ -105,10 +173,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_request'])) {
 
     $contentType = trim($_POST['content_type'] ?? '');
     $rawBody = $_POST['body'] ?? '';
+    
+    // Replace token placeholders
+    $rawBody = str_replace('{{REFRESH_TOKEN}}', $tokens['refresh_token'], $rawBody);
 
     $headers = $defaultHeaders;
     if ($contentType !== '') {
         $headers[] = 'Content-Type: ' . $contentType;
+    }
+    
+    // Add JWT Bearer token for protected endpoints
+    $useAuth = $_POST['use_auth'] ?? false;
+    if ($useAuth && !empty($tokens['access_token'])) {
+        $headers[] = 'Authorization: Bearer ' . $tokens['access_token'];
     }
 
     $ch = curl_init($url);
@@ -132,12 +209,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_request'])) {
         $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $responseHeaders = substr($rawResponse, 0, $headerSize);
         $responseBody = substr($rawResponse, $headerSize);
+        
+        // Auto-extract and store JWT tokens from response
+        $responseJson = json_decode($responseBody, true);
+        if ($responseJson && isset($responseJson['access_token']) && isset($responseJson['refresh_token'])) {
+            store_tokens($responseJson['access_token'], $responseJson['refresh_token']);
+            $tokens = get_stored_tokens(); // Update current tokens
+            $tokenMessage = "🔑 Tokens JWT mis à jour automatiquement";
+        }
+        
         $responseData = [
             'request' => [
                 'url' => $url,
                 'method' => $method,
                 'headers' => $headers,
                 'body' => $rawBody,
+                'auth_used' => $useAuth,
             ],
             'response' => [
                 'status' => $statusCode,
@@ -179,12 +266,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_request'])) {
             document.getElementById('path').value = item.path;
             document.getElementById('content_type').value = item.ctype;
             document.getElementById('body').value = item.body;
+            document.getElementById('use_auth').checked = item.auth || false;
         }
     </script>
     </head>
 <body>
-    <h2>Tester API MoloLo+ (PHP)</h2>
-    <p class="note">La session est conservée via un fichier <code>cookies.txt</code> dans ce dossier après une <strong>connexion</strong>.</p>
+    <h2>Tester API MoloLo+ (JWT Version)</h2>
+    <p class="note">Les tokens JWT sont conservés via un fichier <code>jwt_tokens.json</code> dans ce dossier après une <strong>connexion</strong>.</p>
+    
+    <?php if (isset($successMessage)): ?>
+        <div class="card" style="background: #d4edda; border-color: #c3e6cb; color: #155724;">
+            <strong>✅ <?php echo htmlspecialchars($successMessage, ENT_QUOTES); ?></strong>
+        </div>
+    <?php endif; ?>
+    
+    <?php if (isset($tokenMessage)): ?>
+        <div class="card" style="background: #d1ecf1; border-color: #bee5eb; color: #0c5460;">
+            <strong><?php echo htmlspecialchars($tokenMessage, ENT_QUOTES); ?></strong>
+        </div>
+    <?php endif; ?>
+    
+    <?php if (!empty($tokens['access_token'])): ?>
+        <div class="card" style="background: #e8f5e8; border-color: #28a745;">
+            <strong>🔑 Tokens JWT actifs :</strong><br>
+            <small>Access Token: <?php echo htmlspecialchars(substr($tokens['access_token'], 0, 50) . '...', ENT_QUOTES); ?></small><br>
+            <small>Refresh Token: <?php echo htmlspecialchars(substr($tokens['refresh_token'], 0, 50) . '...', ENT_QUOTES); ?></small><br>
+            <form method="post" style="margin-top: 10px; display: inline;">
+                <button type="submit" name="clear_tokens" class="btn" style="background: #dc3545; font-size: 12px; padding: 5px 10px;">
+                    🗑️ Effacer les tokens
+                </button>
+            </form>
+        </div>
+    <?php else: ?>
+        <div class="card" style="background: #fff3cd; border-color: #ffc107;">
+            <strong>⚠️ Aucun token JWT actif</strong><br>
+            <small>Connectez-vous d'abord pour obtenir des tokens JWT</small>
+            <?php if (file_exists(__DIR__ . '/jwt_tokens.json')): ?>
+                <br><small style="color: #856404;">Fichier jwt_tokens.json existe mais ne contient pas de tokens valides</small>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
 
     <form method="post">
         <div class="card">
@@ -228,8 +349,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_request'])) {
             <textarea id="body" name="body" placeholder="JSON ou form-urlencoded selon Content-Type"><?php echo htmlspecialchars($_POST['body'] ?? '', ENT_QUOTES); ?></textarea>
         </div>
 
+        <div class="card">
+            <label>
+                <input type="checkbox" id="use_auth" name="use_auth" value="1" <?php echo (($_POST['use_auth'] ?? false) ? 'checked' : ''); ?> />
+                Utiliser l'authentification JWT (Bearer Token)
+            </label>
+            <p class="note">Cochez cette case pour les endpoints protégés. Le token sera automatiquement ajouté à l'en-tête Authorization.</p>
+        </div>
+
         <button type="submit" name="send_request" class="btn">Envoyer la requête</button>
+        
+        <?php if (empty($tokens['access_token'])): ?>
+            <button type="button" onclick="quickConnect()" class="btn" style="background: #28a745; margin-left: 10px;">
+                🚀 Connexion rapide
+            </button>
+        <?php endif; ?>
     </form>
+    
+    <script>
+        function quickConnect() {
+            // Auto-fill and submit connection form
+            document.getElementById('method').value = 'POST';
+            document.getElementById('path').value = '/connexion';
+            document.getElementById('content_type').value = 'application/x-www-form-urlencoded';
+            document.getElementById('body').value = 'identifiant=john.doe@example.com&password=motdepasse123';
+            document.getElementById('use_auth').checked = false;
+            document.querySelector('form').submit();
+        }
+    </script>
 
     <?php if ($errorData): ?>
         <div class="card">
@@ -243,6 +390,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_request'])) {
             <h3 class="hdr">Requête</h3>
             <pre><?php echo htmlspecialchars($responseData['request']['method'] . ' ' . $responseData['request']['url'], ENT_QUOTES); ?></pre>
             <pre><?php echo htmlspecialchars(implode("\n", $responseData['request']['headers']), ENT_QUOTES); ?></pre>
+            <?php if ($responseData['request']['auth_used']): ?>
+                <p><strong>🔑 Authentification JWT utilisée</strong></p>
+            <?php endif; ?>
             <?php if (!empty($responseData['request']['body'])): ?>
                 <pre><?php echo htmlspecialchars($responseData['request']['body'], ENT_QUOTES); ?></pre>
             <?php endif; ?>

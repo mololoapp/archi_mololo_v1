@@ -219,4 +219,3 @@ curl.exe -i -X POST "$nom_url/profile" -H "Content-Type: application/json" -b co
 
 Bon tests avec MoloLo+ API !
 
-

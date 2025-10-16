@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1
--- Généré le : lun. 13 oct. 2025 à 16:40
+-- Généré le : jeu. 16 oct. 2025 à 23:18
 -- Version du serveur : 10.4.32-MariaDB
 -- Version de PHP : 8.2.12
 
@@ -84,6 +84,7 @@ INSERT INTO `artiste` (`id`, `nom`, `nom_artiste`, `numero`, `email`, `style_mus
 
 CREATE TABLE `booking` (
   `id` int(11) NOT NULL,
+  `client_id` int(11) NOT NULL,
   `nom_utilisateur` varchar(200) NOT NULL,
   `lieux` varchar(200) NOT NULL,
   `adresse` varchar(200) NOT NULL,
@@ -91,15 +92,19 @@ CREATE TABLE `booking` (
   `heure` time NOT NULL,
   `date` datetime NOT NULL,
   `message` varchar(200) NOT NULL,
-  `user_id` int(11) NOT NULL
+  `user_id` int(11) NOT NULL,
+  `read_at` datetime DEFAULT NULL,
+  `status` enum('en_attente','accepte','refuse') NOT NULL DEFAULT 'en_attente',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `booking`
 --
 
-INSERT INTO `booking` (`id`, `nom_utilisateur`, `lieux`, `adresse`, `montant`, `heure`, `date`, `message`, `user_id`) VALUES
-(1, 'John Doe', 'Club XYZ', '123 Rue de la Musique, Paris', '500€', '22:00:00', '2024-12-15 22:00:00', 'Soirée électronique, 3h de set', 4);
+INSERT INTO `booking` (`id`, `client_id`, `nom_utilisateur`, `lieux`, `adresse`, `montant`, `heure`, `date`, `message`, `user_id`, `read_at`, `status`, `created_at`, `updated_at`) VALUES
+(1, 1, 'John Doe', 'Club XYZ', '123 Rue de la Musique, Paris', '500€', '22:00:00', '2024-12-15 22:00:00', 'Soirée électronique, 3h de set', 4, NULL, 'en_attente', '2025-10-16 23:17:27', NULL);
 
 -- --------------------------------------------------------
 
@@ -164,6 +169,40 @@ CREATE TABLE `jwt_refresh_tokens` (
   `revoked` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `jwt_refresh_tokens`
+--
+
+INSERT INTO `jwt_refresh_tokens` (`id`, `user_id`, `token_hash`, `expires_at`, `revoked`, `created_at`) VALUES
+(1, 4, '8dcefb6cfad109dd4065df87957a27ee5aac8edabfe3438517cdd3bda52864b8', '2025-11-12 19:43:57', 0, '2025-10-13 19:43:57'),
+(2, 4, 'fb319b5f1e8336d1c49eab5acf21fc0768e35062fa34e781be6f309ac34ddafd', '2025-11-12 22:14:06', 0, '2025-10-13 22:14:06'),
+(3, 4, 'c2efebf42fdaf1abd4b518383f4f0e5f81606d28c18a86ed90288b74c3c81fec', '2025-11-12 22:15:45', 0, '2025-10-13 22:15:45'),
+(4, 4, '22caee487c44f6fc481b54b2e355ff51bad37e3bee0ab23650df5602a3bfcd3f', '2025-11-12 22:16:34', 0, '2025-10-13 22:16:34'),
+(5, 4, '3d7667a4263b386b5007fb26c028f3e1a81d472d0b60ddbefc417a2e782e8b1a', '2025-11-12 22:21:25', 0, '2025-10-13 22:21:25');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `jwt_refresh_tokens_user`
+--
+
+CREATE TABLE `jwt_refresh_tokens_user` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `token_hash` char(64) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `revoked` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `jwt_refresh_tokens_user`
+--
+
+INSERT INTO `jwt_refresh_tokens_user` (`id`, `user_id`, `token_hash`, `expires_at`, `revoked`, `created_at`) VALUES
+(1, 4, '811e4cfd2fde128190896eec1da0bc595136beb5eddc5b975e37f2018bccd3a7', '2025-11-15 10:33:54', 0, '2025-10-16 10:33:54'),
+(2, 4, '270b7d132845de9172e29ea68b58a85bf6ac4e64e2b39fb83103c02163970bd2', '2025-11-15 13:53:26', 0, '2025-10-16 13:53:26');
 
 -- --------------------------------------------------------
 
@@ -254,7 +293,7 @@ CREATE TABLE `profile` (
 --
 
 INSERT INTO `profile` (`id`, `user_id`, `photo_couverture`, `photo_profile`, `SmartLink`, `ville`, `bio_courte`, `bio_detailles`, `instagram`, `tiktok`, `twitter`, `linkeding`, `facebook`, `Spotify`, `apple_music`, `youtube`, `Deezer`, `Audiomack`, `style_musique`, `bio`) VALUES
-(1, 4, '', '', '', 'Lyon', 'Update bio courte', '', '', '', '', '', '', '', '', '', '', '', '', ''),
+(1, 4, '', '', '', 'pekin', 'Update bio courte', '', '', '', '', '', '', '', '', '', '', '', '', ''),
 (2, 5, '', '', '', 'Lyon', 'Update bio courte', '', '', '', '', '', '', '', '', '', '', '', '', '');
 
 -- --------------------------------------------------------
@@ -296,6 +335,29 @@ CREATE TABLE `token` (
   `user_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `users`
+--
+
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL,
+  `nom` varchar(255) NOT NULL,
+  `prenom` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `numero` varchar(20) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `users`
+--
+
+INSERT INTO `users` (`id`, `nom`, `prenom`, `email`, `numero`, `password`, `created_at`) VALUES
+(1, 'John Doe', 'DJ John', 'john.doe@example.com', '+33123456789', '$2y$10$AgHBU.YM5N0ByxKHjBgDrOhAKBT5XS3cY3vlxLkJLR99MoyD3qkuG', '2025-10-16 07:29:17');
+
 --
 -- Index pour les tables déchargées
 --
@@ -317,7 +379,10 @@ ALTER TABLE `artiste`
 --
 ALTER TABLE `booking`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_user_booking` (`user_id`);
+  ADD KEY `idx_client_id` (`client_id`),
+  ADD KEY `idx_user_id` (`user_id`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_date` (`date`);
 
 --
 -- Index pour la table `epk`
@@ -337,6 +402,14 @@ ALTER TABLE `galerie`
 -- Index pour la table `jwt_refresh_tokens`
 --
 ALTER TABLE `jwt_refresh_tokens`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `token_hash` (`token_hash`),
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Index pour la table `jwt_refresh_tokens_user`
+--
+ALTER TABLE `jwt_refresh_tokens_user`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `token_hash` (`token_hash`),
   ADD KEY `user_id` (`user_id`);
@@ -389,6 +462,13 @@ ALTER TABLE `token`
   ADD KEY `fk_user_token` (`user_id`);
 
 --
+-- Index pour la table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
 -- AUTO_INCREMENT pour les tables déchargées
 --
 
@@ -426,7 +506,13 @@ ALTER TABLE `galerie`
 -- AUTO_INCREMENT pour la table `jwt_refresh_tokens`
 --
 ALTER TABLE `jwt_refresh_tokens`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT pour la table `jwt_refresh_tokens_user`
+--
+ALTER TABLE `jwt_refresh_tokens_user`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT pour la table `notification`
@@ -471,6 +557,12 @@ ALTER TABLE `token`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT pour la table `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- Contraintes pour les tables déchargées
 --
 
@@ -478,6 +570,7 @@ ALTER TABLE `token`
 -- Contraintes pour la table `booking`
 --
 ALTER TABLE `booking`
+  ADD CONSTRAINT `fk_booking_client` FOREIGN KEY (`client_id`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `fk_user_booking` FOREIGN KEY (`user_id`) REFERENCES `artiste` (`id`);
 
 --

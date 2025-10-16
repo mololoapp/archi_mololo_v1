@@ -95,6 +95,14 @@ switch ($endpoint) {
     case 'booking':
         include __DIR__ . '/routes/booking.php';
         break;
+        
+    case 'booking-artiste':
+        include __DIR__ . '/routes/booking_artiste.php';
+        break;
+        
+    case 'booking-client':
+        include __DIR__ . '/routes/booking_client.php';
+        break;
 
     // ========== GESTION DE L'AGENDA ==========
     case 'agenda':
@@ -156,6 +164,50 @@ switch ($endpoint) {
             }
             break;
 
+    // ========== CONNEXION CLIENT ==========
+
+    case 'userloggin':
+    case 'connexion_user':
+        if($request_method === 'POST'){
+            include __DIR__ . '/routes/jwt_connexion_user.php';
+        }else{
+            sendResponse(['error ' => 'methde non autorisée'], 405);
+        }
+        break;
+
+    case 'inscription_user':
+    case 'register_user':
+        if ($request_method === 'POST') {
+            include __DIR__ . '/routes/inscription_user.php';
+        } else {
+            sendResponse(['error' => 'Méthode non autorisée'], 405);
+        }
+        break;
+
+    case 'deconnexion_user':
+    case 'logout_user':
+        if ($request_method === 'POST') {
+            include __DIR__ . '/routes/jwt_deconnexion.php';
+        } else {
+            sendResponse(['error' => 'Méthode non autorisée'], 405);
+        }
+        break;
+
+     // ========== GESTION DES CIENT ==========
+    case 'users':
+        if ($request_method === 'GET') {
+            include __DIR__ . '/routes/users.php';
+        } elseif ($request_method === 'POST') {
+            include __DIR__ . '/routes/inscription_user.php';
+        } else {
+            sendResponse(['error' => 'Méthode non autorisée'], 405);
+        }
+        break;
+
+    case 'user':
+        include __DIR__ . '/routes/user.php';
+        break;
+
     // ========== ENDPOINT DE STATUT ==========
     case 'status':
     case '':
@@ -171,7 +223,9 @@ switch ($endpoint) {
                 'GET|PUT|DELETE /artiste/{id}' => 'Gestion d\'un artiste',
                 'GET|POST|PUT /profile' => 'Gestion du profil',
                 'GET|POST /epk' => 'Gestion des EPK',
-                'GET|POST /booking' => 'Gestion des bookings',
+                'GET|POST /booking' => 'Gestion des bookings (legacy)',
+                'GET|PATCH /booking-artiste' => 'Gestion des bookings reçus (artistes)',
+                'GET|POST|PUT|DELETE /booking-client' => 'Gestion des bookings envoyés (clients)',
                 'GET|POST /agenda' => 'Gestion de l\'agenda',
                 'GET|POST /opportunites' => 'Gestion des opportunités',
                 'GET|POST /galerie' => 'Gestion de la galerie',
@@ -189,8 +243,9 @@ switch ($endpoint) {
             'requested' => $endpoint,
             'available_endpoints' => [
                 'inscription', 'connexion', 'deconnexion', 'artistes', 'artiste/{id}',
-                'profile', 'epk', 'booking', 'agenda', 'opportunites', 'galerie',
-                'notifications', 'smartlink', 'dashboard', 'status'
+                'profile', 'epk', 'booking', 'booking-artiste', 'booking-client', 
+                'agenda', 'opportunites', 'galerie', 'notifications', 'smartlink', 
+                'dashboard', 'status'
             ]
         ], 404);
         break;

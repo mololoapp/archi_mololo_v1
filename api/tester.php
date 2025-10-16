@@ -151,7 +151,29 @@ $predefined = [
     [ 'label' => 'GET /notifications (JWT)', 'method' => 'GET', 'path' => '/notifications', 'ctype' => '', 'body' => '', 'auth' => true ],
     [ 'label' => 'GET /smartlink (JWT)', 'method' => 'GET', 'path' => '/smartlink', 'ctype' => '', 'body' => '', 'auth' => true ],
     [ 'label' => 'GET /dashboard (JWT)', 'method' => 'GET', 'path' => '/dashboard', 'ctype' => '', 'body' => '', 'auth' => true ],
-    [ 'label' => 'PATCH /booking/{id}/read (JWT)', 'method' => 'PATCH', 'path' => '/booking/1/read', 'ctype' => '', 'body' => '', 'auth' => true ],
+    
+    // ========== BOOKING ARTISTE ==========
+    [ 'label' => 'GET /booking-artiste (JWT)', 'method' => 'GET', 'path' => '/booking-artiste', 'ctype' => '', 'body' => '', 'auth' => true ],
+    [ 'label' => 'PATCH /booking-artiste/{id}/read (JWT)', 'method' => 'PATCH', 'path' => '/booking-artiste/1/read', 'ctype' => '', 'body' => '', 'auth' => true ],
+    [ 'label' => 'PATCH /booking-artiste/{id}/status (JWT)', 'method' => 'PATCH', 'path' => '/booking-artiste/1/status', 'ctype' => 'application/json', 'body' => json_encode(['status' => 'accepte'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 'auth' => true ],
+    
+    // ========== BOOKING CLIENT ==========
+    [ 'label' => 'GET /booking-client (JWT)', 'method' => 'GET', 'path' => '/booking-client', 'ctype' => '', 'body' => '', 'auth' => true ],
+    [ 'label' => 'POST /booking-client (JWT)', 'method' => 'POST', 'path' => '/booking-client', 'ctype' => 'application/json', 'body' => json_encode([
+        'artiste_id' => 4,
+        'lieux' => 'Club XYZ',
+        'adresse' => '123 Rue de la Musique, Paris',
+        'montant' => '500€',
+        'heure' => '22:00:00',
+        'date' => '2024-12-15 22:00:00',
+        'message' => 'Soirée électronique, 3h de set'
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 'auth' => true ],
+    [ 'label' => 'PUT /booking-client/{id} (JWT)', 'method' => 'PUT', 'path' => '/booking-client/1', 'ctype' => 'application/json', 'body' => json_encode([
+        'lieux' => 'Nouveau Club',
+        'montant' => '600€',
+        'message' => 'Mise à jour du booking'
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 'auth' => true ],
+    [ 'label' => 'DELETE /booking-client/{id} (JWT)', 'method' => 'DELETE', 'path' => '/booking-client/1', 'ctype' => '', 'body' => '', 'auth' => true ],
 ];
 
 $responseData = null;

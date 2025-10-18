@@ -6,16 +6,6 @@ require_once __DIR__ . '/../utils/upload.php';
 
 
 // Fonction utilitaire pour vérifier l'authentification
-function requireAuth() {
-    if (!isset($_SESSION['user_id'])) {
-        http_response_code(401);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Authentification requise'
-        ]);
-        exit();
-    }
-}
 
 // Fonction utilitaire pour récupérer les données JSON
 function getJsonInput() {

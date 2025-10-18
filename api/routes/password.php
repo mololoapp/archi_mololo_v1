@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/../utils/otp.php';
+require_once __DIR__ . '/../config/email.php';
+require_once __DIR__ . '/../utils/mailer.php';
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $script_dir = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\');
@@ -31,7 +33,21 @@ switch ($action) {
 				$channel = filter_var($ident, FILTER_VALIDATE_EMAIL) ? 'email' : 'sms';
 				$exp = (new DateTimeImmutable('now'))->add(new DateInterval('PT10M'));
 				insert_password_reset((int)$user['id'], $channel, $salt, $otp_hash, $exp);
-				error_log("[OTP] user_id={$user['id']} via {$channel} code=$otp"); // envoi simulé
+				// Enregistrement OK — on envoie le code par email si le canal est email
+				error_log("[OTP] user_id={$user['id']} via {$channel} code=$otp"); // log pour debug
+				if ($channel === 'email' && !empty($user['email'])) {
+					$to = $user['email'];
+					$subject = 'Code de réinitialisation MoloLo+';
+					$message = "Bonjour " . ($user['nom'] ?? '') . ",\n\n" .
+					    "Voici votre code de réinitialisation : $otp\n" .
+					    "Il expirera dans 10 minutes. Si vous n'avez pas demandé ce code, ignorez cet email.\n\n" .
+					    "Cordialement,\nL'équipe MoloLo+";
+
+					$mailResp = sendEmailSMTP($to, $subject, $message, $smtp_from, $smtp_host, $smtp_port, $smtp_username, $smtp_password);
+					if (!empty($mailResp) && empty($mailResp['success'])) {
+						error_log('Erreur envoi OTP email pour user_id=' . $user['id'] . ' : ' . ($mailResp['message'] ?? 'unknown'));
+					}
+				}
 			}
 			sendResponse(['ok' => true]);
 		}

@@ -35,7 +35,8 @@ function sendResponse($data, $status_code = 200) {
 
 // Routage principal
 switch ($endpoint) {
-    
+    // ========== PARTIE ARTISTE ==========
+
     // ========== AUTHENTIFICATION ==========
     case 'inscription':
     case 'register':
@@ -57,6 +58,26 @@ switch ($endpoint) {
 
     case 'deconnexion':
     case 'logout':
+        if ($request_method === 'POST') {
+            include __DIR__ . '/routes/jwt_deconnexion.php';
+        } else {
+            sendResponse(['error' => 'Méthode non autorisée'], 405);
+        }
+        break;
+
+    case 'password':
+        include __DIR__ . '/routes/password.php';
+        break;
+        
+    case 'refresh-token':
+        if ($request_method === 'POST') {
+            include __DIR__ . '/routes/jwt_refresh.php';
+        } else {
+            sendResponse(['error' => 'Méthode non autorisée'], 405);
+        }
+        break;
+        
+    case 'deconnexion-jwt':
         if ($request_method === 'POST') {
             include __DIR__ . '/routes/jwt_deconnexion.php';
         } else {
@@ -91,17 +112,34 @@ switch ($endpoint) {
         include __DIR__ . '/routes/epk.php';
         break;
 
-    // ========== GESTION DU BOOKING ==========
-    case 'booking':
-        include __DIR__ . '/routes/booking.php';
+    // ========== GÉNÉRATION PDF ==========
+    case 'pdf':
+        include __DIR__ . '/routes/pdf.php';
         break;
+
+    // ========== WHATSAPP ==========
+    case 'contacts':
+        // GET /contacts?action=contacts
+        if ($request_method === 'GET') {
+            include __DIR__ . '/routes/whatsapp.php';
+        } else {
+            sendResponse(['error' => 'Méthode non autorisée'], 405);
+        }
+        break;
+
+    case 'send':
+        // POST /send?action=send
+        if ($request_method === 'POST') {
+            include __DIR__ . '/routes/whatsapp.php';
+        } else {
+            sendResponse(['error' => 'Méthode non autorisée'], 405);
+        }
+        break;
+
+    // ========== GESTION DU BOOKING ==========
         
     case 'booking-artiste':
         include __DIR__ . '/routes/booking_artiste.php';
-        break;
-        
-    case 'booking-client':
-        include __DIR__ . '/routes/booking_client.php';
         break;
 
     // ========== GESTION DE L'AGENDA ==========
@@ -126,6 +164,23 @@ switch ($endpoint) {
         include __DIR__ . '/routes/notifications.php';
         break;
 
+    // ========== ENVOI D'EMAILS POUR ARTISTES ==========
+    case 'contacts_email':
+        if ($request_method === 'GET') {
+            include __DIR__ . '/routes/email.php';
+        } else {
+            sendResponse(['error' => 'Méthode non autorisée'], 405);
+        }
+        break;
+
+    case 'send_email':
+        if ($request_method === 'POST') {
+            include __DIR__ . '/routes/email.php';
+        } else {
+            sendResponse(['error' => 'Méthode non autorisée'], 405);
+        }
+        break;
+
     // ========== GESTION DES SMARTLINKS ==========
     case 'smartlink':
         include __DIR__ . '/routes/smartlink.php';
@@ -135,36 +190,11 @@ switch ($endpoint) {
     case 'dashboard':
         include __DIR__ . '/routes/dashboard.php';
         break;
+    
 
-        case 'password':
-            include __DIR__ . '/routes/password.php';
-            break;
-        
-        case 'connexion-jwt':
-            if ($request_method === 'POST') {
-                include __DIR__ . '/routes/jwt_connexion.php';
-            } else {
-                sendResponse(['error' => 'Méthode non autorisée'], 405);
-            }
-            break;
-        
-        case 'refresh-token':
-            if ($request_method === 'POST') {
-                include __DIR__ . '/routes/jwt_refresh.php';
-            } else {
-                sendResponse(['error' => 'Méthode non autorisée'], 405);
-            }
-            break;
-        
-        case 'deconnexion-jwt':
-            if ($request_method === 'POST') {
-                include __DIR__ . '/routes/jwt_deconnexion.php';
-            } else {
-                sendResponse(['error' => 'Méthode non autorisée'], 405);
-            }
-            break;
+    // ========== PARTIE CLIENT ==========
 
-    // ========== CONNEXION CLIENT ==========
+    // ========== AUTHENTIFICATION CLIENT ==========
 
     case 'userloggin':
     case 'connexion_user':
@@ -206,6 +236,12 @@ switch ($endpoint) {
 
     case 'user':
         include __DIR__ . '/routes/user.php';
+        break;
+
+    // ========== GESTION BOOKING ==========
+
+    case 'booking-client':
+        include __DIR__ . '/routes/booking_client.php';
         break;
 
     // ========== ENDPOINT DE STATUT ==========
